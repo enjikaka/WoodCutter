@@ -1,0 +1,10 @@
+name: WoodCutter
+main: org.vufuzi.WoodCutter
+author: enjikaka
+website: http://vufuzi.org
+version: 1.4
+
+permissions:
+  woodcutter.use:
+    description: Give you access to use WoodCutters features.
+    default: op

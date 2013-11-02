@@ -1,4 +1,4 @@
-package org.vufuzi;
+package se.enji;
 
 import org.bukkit.Material;
 import org.bukkit.World;

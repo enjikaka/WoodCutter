@@ -1,8 +1,8 @@
 name: WoodCutter
-main: org.vufuzi.WoodCutter
+main: se.enji.WoodCutter
 author: enjikaka
-website: http://vufuzi.org
-version: 1.4
+website: http://enji.se
+version: 1.4.1
 
 permissions:
   woodcutter.use:

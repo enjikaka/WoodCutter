@@ -1,8 +1,8 @@
 name: WoodCutter
 main: se.enji.WoodCutter
 author: enjikaka
-website: http://enji.se
-version: 1.4.1
+website: http://labs.enji.se/mc/WoodCutter
+version: 1.4.6
 
 permissions:
   woodcutter.use:

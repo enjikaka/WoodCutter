@@ -15,13 +15,22 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class WoodCutter extends JavaPlugin implements Listener {
 	FileConfiguration config;
+	
+	Boolean needAxe;
+	Boolean mustSneak;
+	
 	List<?> breakable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2 });
 	List<?> surroundable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS });
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);
+		
 		config = getConfig();
 		config.options().copyDefaults(true);
+		
+		needAxe = config.getBoolean("needAxe");
+		mustSneak = config.getBoolean("mustSneak");
+		
 		saveConfig();
 	}
 
@@ -40,6 +49,10 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		Location l = e.getBlock().getLocation();
 		
 		if (!surroundable.contains(l.subtract(0.0, 1.0, 0.0).getBlock().getType()) || !surroundable.contains(l.add(0.0, 1.0, 0.0).getBlock().getType())) {
+			return;
+		}
+		
+		if (mustSneak && !p.isSneaking()) {
 			return;
 		}
 		

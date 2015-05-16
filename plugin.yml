@@ -1,8 +1,8 @@
 name: WoodCutter
 main: se.enji.WoodCutter
 author: enjikaka
-website: http://labs.enji.se/mc/WoodCutter
-version: 1.4.6
+website: http://minecraft.jeremy.se/WoodCutter
+version: 1.4.7
 
 permissions:
   woodcutter.use:

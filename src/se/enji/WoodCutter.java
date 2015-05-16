@@ -15,8 +15,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class WoodCutter extends JavaPlugin implements Listener {
 	FileConfiguration config;
-	List<?> breakable = Arrays.asList(new Material[]{Material.LOG, Material.LOG_2});
-	List<?> surroundable = Arrays.asList(new Material[]{Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS});
+	List<?> breakable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2 });
+	List<?> surroundable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS });
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);
@@ -28,10 +28,21 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onBlockBreak(BlockBreakEvent e) {
 		Player p = e.getPlayer();
-		if (!p.hasPermission("woodcutter.use")) return;
-		if (!breakable.contains(e.getBlock().getType()) || !isAxe(p.getItemInHand().getType())) return;
+		
+		if (!p.hasPermission("woodcutter.use")) {
+			return;
+		}
+		
+		if (!breakable.contains(e.getBlock().getType()) || !isAxe(p.getItemInHand().getType())) {
+			return;
+		}
+		
 		Location l = e.getBlock().getLocation();
-		if (!surroundable.contains(l.subtract(0.0, 1.0, 0.0).getBlock().getType()) || !surroundable.contains(l.add(0.0, 1.0, 0.0).getBlock().getType())) return;
+		
+		if (!surroundable.contains(l.subtract(0.0, 1.0, 0.0).getBlock().getType()) || !surroundable.contains(l.add(0.0, 1.0, 0.0).getBlock().getType())) {
+			return;
+		}
+		
 		columnRemove(l, p);
 	}
 
@@ -39,19 +50,42 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		boolean logsLeft = true;
 		int fallen = 0;
 		location.subtract(0.0, 1.0, 0.0);
+		
 		while (logsLeft) {
 			Block block = location.add(0.0,1.0,0.0).getBlock();
+			
 			if (breakable.contains(block.getType())) {
 				block.breakNaturally();
 				fallen++;
 			}
+			
 			else logsLeft = false;
 
-			Location newLocation = block.getLocation().subtract(1.0, 0, 0);if (breakable.contains(newLocation.getBlock().getType())) columnRemove(newLocation, player);
-			newLocation = block.getLocation().subtract(0, 0, 1.0);if (breakable.contains(newLocation.getBlock().getType())) columnRemove(newLocation, player);
-			newLocation = block.getLocation().subtract(0, 0, -1.0);if (breakable.contains(newLocation.getBlock().getType())) columnRemove(newLocation, player);
-			newLocation = block.getLocation().subtract(-1.0, 0, 0);if (breakable.contains(newLocation.getBlock().getType())) columnRemove(newLocation, player);
+			Location newLocation = block.getLocation().subtract(1.0, 0, 0);
+			
+			if (breakable.contains(newLocation.getBlock().getType())) {
+				columnRemove(newLocation, player);
+			}
+			
+			newLocation = block.getLocation().subtract(0, 0, 1.0);
+			
+			if (breakable.contains(newLocation.getBlock().getType())) {
+				columnRemove(newLocation, player);
+			}
+			
+			newLocation = block.getLocation().subtract(0, 0, -1.0);
+			
+			if (breakable.contains(newLocation.getBlock().getType())) {
+				columnRemove(newLocation, player);
+			}
+			
+			newLocation = block.getLocation().subtract(-1.0, 0, 0);
+			
+			if (breakable.contains(newLocation.getBlock().getType())) {
+				columnRemove(newLocation, player);
+			}
 		}
+		
 		player.getItemInHand().setDurability((short)(player.getItemInHand().getDurability() + fallen));
 	}
 

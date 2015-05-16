@@ -103,6 +103,6 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	}
 
 	private boolean isAxe(Material a) {
-		return !config.getBoolean("needAxe") ? true : a.toString().endsWith("_AXE");
+		return !needAxe ? true : a.toString().endsWith("_AXE");
 	}
 }

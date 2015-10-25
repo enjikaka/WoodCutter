@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class WoodCutter extends JavaPlugin implements Listener {
@@ -99,10 +100,44 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			}
 		}
 		
-		player.getItemInHand().setDurability((short)(player.getItemInHand().getDurability() + fallen));
+		ItemStack handItem = player.getItemInHand();
+		
+		short durability = (short)(player.getItemInHand().getDurability() + fallen);
+		
+		if (durability < maxDurability(handItem.getType())) {
+			handItem.setDurability(durability);
+		} else {
+			handItem.setAmount(0);
+		}
+		
 	}
 
 	private boolean isAxe(Material a) {
 		return !needAxe ? true : a.toString().endsWith("_AXE");
+	}
+	
+	private short maxDurability(Material m) {
+		short durability = 0;
+		switch (m) {
+			case GOLD_AXE:
+				durability = 33;
+				break;
+			case WOOD_AXE:
+				durability = 60;
+				break;
+			case STONE_AXE:
+				durability = 132;
+				break;
+			case IRON_AXE:
+				durability = 251;
+				break;
+			case DIAMOND_AXE:
+				durability = 1562;
+				break;
+			default:
+				durability = 0;
+				break;
+		}
+		return durability;
 	}
 }

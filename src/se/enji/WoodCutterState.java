@@ -24,6 +24,7 @@ public class WoodCutterState {
     public boolean isSameTree(Block block) {
         int blockId = block.getTypeId();
         int blockMeta = block.getData();
+        
         // Handle special case for large oak trees, which uses horizontal logs
         if (id == 17 && meta == 0) {
             return blockId == 17 && (blockMeta == 0 || blockMeta == 4 || blockMeta == 8);

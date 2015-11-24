@@ -15,15 +15,18 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class WoodCutter extends JavaPlugin implements Listener {
 	FileConfiguration config;
+	WoodCutterPrism prism;
 	Random random;
 
 	Boolean needAxe;
 	Boolean mustSneak;
-	
+	Boolean recordPrismEvents;
+
 	List<?> breakable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2 });
 	List<?> surroundable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS });
 
@@ -35,7 +38,14 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		
 		needAxe = config.getBoolean("needAxe");
 		mustSneak = config.getBoolean("mustSneak");
-		
+		recordPrismEvents = config.getBoolean("recordPrismEvents");
+
+		Plugin prismPlugin = getServer().getPluginManager().getPlugin("Prism");
+		if (recordPrismEvents && prismPlugin != null) {
+			prism = new WoodCutterPrism(prismPlugin);
+		} else {
+			prism = null;
+		}
 
 		random = new Random();
 
@@ -78,6 +88,9 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			Block block = location.add(0.0,1.0,0.0).getBlock();
 			
 			if (state.isSameTree(block)) {
+				if (prism != null) {
+					prism.recordBreak(block, state.player);
+				}
 				block.breakNaturally();
 				fallen++;
 				state.totalFallen++;

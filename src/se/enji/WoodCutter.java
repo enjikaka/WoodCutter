@@ -63,11 +63,13 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		if (mustSneak && !p.isSneaking()) {
 			return;
 		}
+
+		WoodCutterState state = new WoodCutterState(e.getBlock(), p);
 		
-		columnRemove(l, p);
+		columnRemove(state, l);
 	}
 
-	private void columnRemove(Location location, Player player) {
+	private void columnRemove(WoodCutterState state, Location location) {
 		boolean logsLeft = true;
 		int fallen = 0;
 		location.subtract(0.0, 1.0, 0.0);
@@ -75,24 +77,25 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		while (logsLeft) {
 			Block block = location.add(0.0,1.0,0.0).getBlock();
 			
-			if (breakable.contains(block.getType())) {
+			if (state.isSameTree(block)) {
 				block.breakNaturally();
 				fallen++;
+				state.totalFallen++;
 			}
 			
 			else logsLeft = false;
 
-			columnCheck(block, player, 1.0, 0);
-			columnCheck(block, player, 0, 1.0);
-			columnCheck(block, player, -1.0, 0);
-			columnCheck(block, player, 0, -1.0);
-			columnCheck(block, player, 1.0, 1.0);
-			columnCheck(block, player, 1.0, -1.0);
-			columnCheck(block, player, -1.0, 1.0);
-			columnCheck(block, player, -1.0, -1.0);
+			columnCheck(state, block, 1.0, 0);
+			columnCheck(state, block, 0, 1.0);
+			columnCheck(state, block, -1.0, 0);
+			columnCheck(state, block, 0, -1.0);
+			columnCheck(state, block, 1.0, 1.0);
+			columnCheck(state, block, 1.0, -1.0);
+			columnCheck(state, block, -1.0, 1.0);
+			columnCheck(state, block, -1.0, -1.0);
 		}
 		
-		ItemStack handItem = player.getItemInHand();
+		ItemStack handItem = state.player.getItemInHand();
 		int unbreaking = handItem.getEnchantmentLevel(Enchantment.DURABILITY);
 
 		if (unbreaking > 0) {
@@ -105,22 +108,29 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			}
 		}
 		
-		short durability = (short)(player.getItemInHand().getDurability() + fallen);
-		
+		short durability = (short)(state.player.getItemInHand().getDurability() + fallen);
+
 		if (durability < maxDurability(handItem.getType())) {
 			handItem.setDurability(durability);
 		} else {
 			handItem.setAmount(0);
-			player.setItemInHand(null);
+			state.player.setItemInHand(null);
 		}
 		
 	}
 
-	private void columnCheck(Block block, Player player, double xOffset, double zOffset) {
+	private void columnCheck(WoodCutterState state, Block block, double xOffset, double zOffset) {
 		Location newLocation = block.getLocation().subtract(xOffset, 0, zOffset);
 
-		if (breakable.contains(newLocation.getBlock().getType())) {
-			columnRemove(newLocation, player);
+		int totalXOffset = Math.abs(state.origin.getBlockX() - newLocation.getBlockX());
+		int totalZOffset = Math.abs(state.origin.getBlockZ() - newLocation.getBlockZ());
+
+		if (totalXOffset > 5 || totalZOffset > 5) {
+			return;
+		}
+
+		if (state.totalFallen < 150 && state.isSameTree(newLocation.getBlock())) {
+			columnRemove(state, newLocation);
 		}
 	}
 

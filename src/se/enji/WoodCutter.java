@@ -82,29 +82,14 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			
 			else logsLeft = false;
 
-			Location newLocation = block.getLocation().subtract(1.0, 0, 0);
-			
-			if (breakable.contains(newLocation.getBlock().getType())) {
-				columnRemove(newLocation, player);
-			}
-			
-			newLocation = block.getLocation().subtract(0, 0, 1.0);
-			
-			if (breakable.contains(newLocation.getBlock().getType())) {
-				columnRemove(newLocation, player);
-			}
-			
-			newLocation = block.getLocation().subtract(0, 0, -1.0);
-			
-			if (breakable.contains(newLocation.getBlock().getType())) {
-				columnRemove(newLocation, player);
-			}
-			
-			newLocation = block.getLocation().subtract(-1.0, 0, 0);
-			
-			if (breakable.contains(newLocation.getBlock().getType())) {
-				columnRemove(newLocation, player);
-			}
+			columnCheck(block, player, 1.0, 0);
+			columnCheck(block, player, 0, 1.0);
+			columnCheck(block, player, -1.0, 0);
+			columnCheck(block, player, 0, -1.0);
+			columnCheck(block, player, 1.0, 1.0);
+			columnCheck(block, player, 1.0, -1.0);
+			columnCheck(block, player, -1.0, 1.0);
+			columnCheck(block, player, -1.0, -1.0);
 		}
 		
 		ItemStack handItem = player.getItemInHand();
@@ -129,6 +114,14 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			player.setItemInHand(null);
 		}
 		
+	}
+
+	private void columnCheck(Block block, Player player, double xOffset, double zOffset) {
+		Location newLocation = block.getLocation().subtract(xOffset, 0, zOffset);
+
+		if (breakable.contains(newLocation.getBlock().getType())) {
+			columnRemove(newLocation, player);
+		}
 	}
 
 	private boolean isAxe(Material a) {

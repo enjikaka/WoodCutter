@@ -2,11 +2,13 @@ package se.enji;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -17,7 +19,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class WoodCutter extends JavaPlugin implements Listener {
 	FileConfiguration config;
-	
+	Random random;
+
 	Boolean needAxe;
 	Boolean mustSneak;
 	
@@ -33,6 +36,9 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		needAxe = config.getBoolean("needAxe");
 		mustSneak = config.getBoolean("mustSneak");
 		
+
+		random = new Random();
+
 		saveConfig();
 	}
 
@@ -102,6 +108,17 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		}
 		
 		ItemStack handItem = player.getItemInHand();
+		int unbreaking = handItem.getEnchantmentLevel(Enchantment.DURABILITY);
+
+		if (unbreaking > 0) {
+			// http://minecraft.gamepedia.com/Enchantment#Enchantments
+			int chance = 100 / (unbreaking + 1);
+			int oldFallen = fallen;
+
+			for (int i = 0; i < oldFallen; i++) {
+				if (random.nextInt(100) > chance) fallen--;
+			}
+		}
 		
 		short durability = (short)(player.getItemInHand().getDurability() + fallen);
 		
@@ -109,6 +126,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			handItem.setDurability(durability);
 		} else {
 			handItem.setAmount(0);
+			player.setItemInHand(null);
 		}
 		
 	}

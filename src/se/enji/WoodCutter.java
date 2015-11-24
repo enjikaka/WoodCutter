@@ -2,24 +2,31 @@ package se.enji;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class WoodCutter extends JavaPlugin implements Listener {
 	FileConfiguration config;
-	
+	WoodCutterPrism prism;
+	Random random;
+
 	Boolean needAxe;
 	Boolean mustSneak;
-	
+	Boolean recordPrismEvents;
+
 	List<?> breakable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2 });
 	List<?> surroundable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS });
 
@@ -31,11 +38,21 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		
 		needAxe = config.getBoolean("needAxe");
 		mustSneak = config.getBoolean("mustSneak");
-		
+		recordPrismEvents = config.getBoolean("recordPrismEvents");
+
+		Plugin prismPlugin = getServer().getPluginManager().getPlugin("Prism");
+		if (recordPrismEvents && prismPlugin != null) {
+			prism = new WoodCutterPrism(prismPlugin);
+		} else {
+			prism = null;
+		}
+
+		random = new Random();
+
 		saveConfig();
 	}
 
-	@EventHandler
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
 	public void onBlockBreak(BlockBreakEvent e) {
 		Player p = e.getPlayer();
 		
@@ -56,11 +73,13 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		if (mustSneak && !p.isSneaking()) {
 			return;
 		}
+
+		WoodCutterState state = new WoodCutterState(e.getBlock(), p);
 		
-		columnRemove(l, p);
+		columnRemove(state, l);
 	}
 
-	private void columnRemove(Location location, Player player) {
+	private void columnRemove(WoodCutterState state, Location location) {
 		boolean logsLeft = true;
 		int fallen = 0;
 		location.subtract(0.0, 1.0, 0.0);
@@ -68,48 +87,64 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		while (logsLeft) {
 			Block block = location.add(0.0,1.0,0.0).getBlock();
 			
-			if (breakable.contains(block.getType())) {
+			if (state.isSameTree(block)) {
+				if (prism != null) {
+					prism.recordBreak(block, state.player);
+				}
 				block.breakNaturally();
 				fallen++;
+				state.totalFallen++;
 			}
 			
 			else logsLeft = false;
 
-			Location newLocation = block.getLocation().subtract(1.0, 0, 0);
-			
-			if (breakable.contains(newLocation.getBlock().getType())) {
-				columnRemove(newLocation, player);
-			}
-			
-			newLocation = block.getLocation().subtract(0, 0, 1.0);
-			
-			if (breakable.contains(newLocation.getBlock().getType())) {
-				columnRemove(newLocation, player);
-			}
-			
-			newLocation = block.getLocation().subtract(0, 0, -1.0);
-			
-			if (breakable.contains(newLocation.getBlock().getType())) {
-				columnRemove(newLocation, player);
-			}
-			
-			newLocation = block.getLocation().subtract(-1.0, 0, 0);
-			
-			if (breakable.contains(newLocation.getBlock().getType())) {
-				columnRemove(newLocation, player);
+			columnCheck(state, block, 1.0, 0);
+			columnCheck(state, block, 0, 1.0);
+			columnCheck(state, block, -1.0, 0);
+			columnCheck(state, block, 0, -1.0);
+			columnCheck(state, block, 1.0, 1.0);
+			columnCheck(state, block, 1.0, -1.0);
+			columnCheck(state, block, -1.0, 1.0);
+			columnCheck(state, block, -1.0, -1.0);
+		}
+		
+		ItemStack handItem = state.player.getItemInHand();
+		int unbreaking = handItem.getEnchantmentLevel(Enchantment.DURABILITY);
+
+		if (unbreaking > 0) {
+			// http://minecraft.gamepedia.com/Enchantment#Enchantments
+			int chance = 100 / (unbreaking + 1);
+			int oldFallen = fallen;
+
+			for (int i = 0; i < oldFallen; i++) {
+				if (random.nextInt(100) > chance) fallen--;
 			}
 		}
 		
-		ItemStack handItem = player.getItemInHand();
-		
-		short durability = (short)(player.getItemInHand().getDurability() + fallen);
-		
+		short durability = (short)(state.player.getItemInHand().getDurability() + fallen);
+
 		if (durability < maxDurability(handItem.getType())) {
 			handItem.setDurability(durability);
 		} else {
 			handItem.setAmount(0);
+			state.player.setItemInHand(null);
 		}
 		
+	}
+
+	private void columnCheck(WoodCutterState state, Block block, double xOffset, double zOffset) {
+		Location newLocation = block.getLocation().subtract(xOffset, 0, zOffset);
+
+		int totalXOffset = Math.abs(state.origin.getBlockX() - newLocation.getBlockX());
+		int totalZOffset = Math.abs(state.origin.getBlockZ() - newLocation.getBlockZ());
+
+		if (totalXOffset > 5 || totalZOffset > 5) {
+			return;
+		}
+
+		if (state.totalFallen < 150 && state.isSameTree(newLocation.getBlock())) {
+			columnRemove(state, newLocation);
+		}
 	}
 
 	private boolean isAxe(Material a) {

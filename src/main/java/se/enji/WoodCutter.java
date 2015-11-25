@@ -23,9 +23,9 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	WoodCutterPrism prism;
 	Random random;
 
-	Boolean needAxe;
-	Boolean mustSneak;
-	Boolean recordPrismEvents;
+	boolean needAxe;
+	boolean mustSneak;
+	boolean recordPrismEvents;
 
 	List<?> breakable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2 });
 	List<?> surroundable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS });
@@ -148,11 +148,11 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	}
 
 	private boolean isAxe(Material a) {
-		return !needAxe ? true : a.toString().endsWith("_AXE");
+		return !needAxe || a.toString().endsWith("_AXE");
 	}
 	
 	private short maxDurability(Material m) {
-		short durability = 0;
+		short durability;
 		switch (m) {
 			case GOLD_AXE:
 				durability = 33;

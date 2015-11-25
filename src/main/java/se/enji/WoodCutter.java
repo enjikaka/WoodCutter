@@ -27,8 +27,8 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	boolean mustSneak;
 	boolean recordPrismEvents;
 
-	List<?> breakable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2 });
-	List<?> surroundable = Arrays.asList(new Material[] { Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS });
+	List<?> breakable = Arrays.asList(Material.LOG, Material.LOG_2);
+	List<?> surroundable = Arrays.asList(Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS);
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);

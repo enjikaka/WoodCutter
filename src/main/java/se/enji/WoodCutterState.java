@@ -28,6 +28,8 @@ public class WoodCutterState {
 
     @SuppressWarnings("deprecation")
     public boolean isSameTree(Block block) {
+        // Using deprecated ID and meta here, because the only alternative seems to be
+        // creating new Tree objects. Seems too wasteful
         int blockId = block.getTypeId();
         int blockMeta = block.getData();
         

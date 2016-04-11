@@ -95,21 +95,17 @@ public class WoodCutter extends JavaPlugin implements Listener {
 				if (prism != null) {
 					prism.recordBreak(block, state.player);
 				}
-				block.breakNaturally();
+				block.breakNaturally(state.heldItem);
 				fallen++;
 				state.totalFallen++;
 			}
 			
 			else logsLeft = false;
 
-			columnCheck(state, block, 1.0, 0);
-			columnCheck(state, block, 0, 1.0);
-			columnCheck(state, block, -1.0, 0);
-			columnCheck(state, block, 0, -1.0);
-			columnCheck(state, block, 1.0, 1.0);
-			columnCheck(state, block, 1.0, -1.0);
-			columnCheck(state, block, -1.0, 1.0);
-			columnCheck(state, block, -1.0, -1.0);
+			for (int x = -1; x <= 1; x++)
+			for (int z = -1; z <= 1; z++) {
+				columnCheck(state, block, x, z);
+			}
 		}
 
 		durabilityCheck(state, fallen);

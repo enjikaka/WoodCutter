@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -127,6 +128,10 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	}
 
 	private void durabilityCheck(WoodCutterState state, int fallen) {
+		if (state.player.getGameMode() == GameMode.CREATIVE) {
+			return;
+		}
+		
 		if (!isHoldingAxe(state.player) || state.heldItem.getAmount() == 0) {
 			return;
 		}

@@ -7,12 +7,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 public class WoodCutterState {
-    int id;
-    byte meta;
-    Location origin;
-    Player player;
-    ItemStack heldItem;
-    int heldItemUnbreaking;
+    final int id;
+    final byte meta;
+    final Location origin;
+    final Player player;
+    final ItemStack heldItem;
+    final int heldItemUnbreaking;
 
     int totalFallen = 0;
 

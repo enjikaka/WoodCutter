@@ -60,7 +60,11 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			return;
 		}
 		
-		if (!breakable.contains(e.getBlock().getType()) || !isHoldingAxe(p)) {
+		if (!breakable.contains(e.getBlock().getType())) {
+			return;
+		}
+
+		if (needAxe && !isHoldingAxe(p)) {
 			return;
 		}
 		
@@ -108,25 +112,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			columnCheck(state, block, -1.0, -1.0);
 		}
 
-		if (state.heldItemUnbreaking > 0) {
-			// http://minecraft.gamepedia.com/Enchantment#Enchantments
-			int chance = 100 / (state.heldItemUnbreaking + 1);
-			int oldFallen = fallen;
-
-			for (int i = 0; i < oldFallen; i++) {
-				if (random.nextInt(100) > chance) fallen--;
-			}
-		}
-		
-		short durability = (short)(state.heldItem.getDurability() + fallen);
-
-		if (durability < maxDurability(state.heldItem.getType())) {
-			state.heldItem.setDurability(durability);
-		} else {
-			state.heldItem.setAmount(0);
-			state.player.getInventory().setItemInMainHand(null);
-		}
-		
+		durabilityCheck(state, fallen);
 	}
 
 	private void columnCheck(WoodCutterState state, Block block, double xOffset, double zOffset) {
@@ -144,9 +130,34 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		}
 	}
 
+	private void durabilityCheck(WoodCutterState state, int fallen) {
+		if (!isHoldingAxe(state.player) || state.heldItem.getAmount() == 0) {
+			return;
+		}
+
+		if (state.heldItemUnbreaking > 0) {
+			// http://minecraft.gamepedia.com/Enchantment#Enchantments
+			int chance = 100 / (state.heldItemUnbreaking + 1);
+			int oldFallen = fallen;
+
+			for (int i = 0; i < oldFallen; i++) {
+				if (random.nextInt(100) > chance) fallen--;
+			}
+		}
+
+		short newDurability = (short)(state.heldItem.getDurability() + fallen);
+
+		if (newDurability < maxDurability(state.heldItem.getType())) {
+			state.heldItem.setDurability(newDurability);
+		} else {
+			state.heldItem.setAmount(0);
+			state.player.getInventory().setItemInMainHand(null);
+		}
+	}
+
 	private boolean isHoldingAxe(Player p) {
 		Material held = p.getInventory().getItemInMainHand().getType();
-		return !needAxe || held.toString().endsWith("_AXE");
+		return held.toString().endsWith("_AXE");
 	}
 	
 	private short maxDurability(Material m) {

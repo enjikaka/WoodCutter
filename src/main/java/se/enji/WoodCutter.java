@@ -60,7 +60,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			return;
 		}
 		
-		if (!breakable.contains(e.getBlock().getType()) || !isAxe(p.getItemInHand().getType())) {
+		if (!breakable.contains(e.getBlock().getType()) || !isHoldingAxe(p)) {
 			return;
 		}
 		
@@ -107,13 +107,10 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			columnCheck(state, block, -1.0, 1.0);
 			columnCheck(state, block, -1.0, -1.0);
 		}
-		
-		ItemStack handItem = state.player.getItemInHand();
-		int unbreaking = handItem.getEnchantmentLevel(Enchantment.DURABILITY);
 
-		if (unbreaking > 0) {
+		if (state.heldItemUnbreaking > 0) {
 			// http://minecraft.gamepedia.com/Enchantment#Enchantments
-			int chance = 100 / (unbreaking + 1);
+			int chance = 100 / (state.heldItemUnbreaking + 1);
 			int oldFallen = fallen;
 
 			for (int i = 0; i < oldFallen; i++) {
@@ -121,13 +118,13 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			}
 		}
 		
-		short durability = (short)(state.player.getItemInHand().getDurability() + fallen);
+		short durability = (short)(state.heldItem.getDurability() + fallen);
 
-		if (durability < maxDurability(handItem.getType())) {
-			handItem.setDurability(durability);
+		if (durability < maxDurability(state.heldItem.getType())) {
+			state.heldItem.setDurability(durability);
 		} else {
-			handItem.setAmount(0);
-			state.player.setItemInHand(null);
+			state.heldItem.setAmount(0);
+			state.player.getInventory().setItemInMainHand(null);
 		}
 		
 	}
@@ -147,8 +144,9 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		}
 	}
 
-	private boolean isAxe(Material a) {
-		return !needAxe || a.toString().endsWith("_AXE");
+	private boolean isHoldingAxe(Player p) {
+		Material held = p.getInventory().getItemInMainHand().getType();
+		return !needAxe || held.toString().endsWith("_AXE");
 	}
 	
 	private short maxDurability(Material m) {

@@ -2,13 +2,17 @@ package se.enji;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 public class WoodCutterState {
     int id;
     byte meta;
     Location origin;
     Player player;
+    ItemStack heldItem;
+    int heldItemUnbreaking;
 
     int totalFallen = 0;
 
@@ -18,6 +22,8 @@ public class WoodCutterState {
         this.meta = block.getData();
         this.origin = block.getLocation();
         this.player = player;
+        this.heldItem = player.getInventory().getItemInMainHand();
+        this.heldItemUnbreaking = heldItem.getEnchantmentLevel(Enchantment.DURABILITY);
     }
 
     @SuppressWarnings("deprecation")

@@ -9,13 +9,11 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -29,7 +27,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	boolean recordPrismEvents;
 
 	List<?> breakable = Arrays.asList(Material.LOG, Material.LOG_2);
-	List<?> surroundable = Arrays.asList(Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS);
+	private List<?> surroundable = Arrays.asList(Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS);
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);
@@ -56,30 +54,19 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	@EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
 	public void onBlockBreak(BlockBreakEvent e) {
 		Player p = e.getPlayer();
+    Location l = e.getBlock().getLocation();
+    WoodCutterState state = new WoodCutterState(e.getBlock(), p);
 		
-		if (!p.hasPermission("woodcutter.use")) {
+		if (
+      !p.hasPermission("woodcutter.use") || // If user does not have permission to use WoodCutter
+      !breakable.contains(e.getBlock().getType()) || // If the broken block is not a log
+      needAxe && !isHoldingAxe(p) || // If axe must be held in hand for woodcutting to be allowed and if use is not holding one
+      !surroundable.contains(l.subtract(0.0, 1.0, 0.0).getBlock().getType()) || // If block below is not a accepted "surroundable" block.
+      !surroundable.contains(l.add(0.0, 1.0, 0.0).getBlock().getType()) || // If block above is not an accepted "surroundable" block.
+      mustSneak && !p.isSneaking() // If sneaking must be made to fell trees and user is not sneaking
+      ) {
 			return;
 		}
-		
-		if (!breakable.contains(e.getBlock().getType())) {
-			return;
-		}
-
-		if (needAxe && !isHoldingAxe(p)) {
-			return;
-		}
-		
-		Location l = e.getBlock().getLocation();
-		
-		if (!surroundable.contains(l.subtract(0.0, 1.0, 0.0).getBlock().getType()) || !surroundable.contains(l.add(0.0, 1.0, 0.0).getBlock().getType())) {
-			return;
-		}
-		
-		if (mustSneak && !p.isSneaking()) {
-			return;
-		}
-
-		WoodCutterState state = new WoodCutterState(e.getBlock(), p);
 		
 		columnRemove(state, l);
 	}
@@ -87,6 +74,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	private void columnRemove(WoodCutterState state, Location location) {
 		boolean logsLeft = true;
 		int fallen = 0;
+
 		location.subtract(0.0, 1.0, 0.0);
 		
 		while (logsLeft) {
@@ -96,7 +84,9 @@ public class WoodCutter extends JavaPlugin implements Listener {
 				if (prism != null) {
 					prism.recordBreak(block, state.player);
 				}
+
 				block.breakNaturally(state.heldItem);
+
 				fallen++;
 				state.totalFallen++;
 			}
@@ -128,11 +118,11 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	}
 
 	private void durabilityCheck(WoodCutterState state, int fallen) {
-		if (state.player.getGameMode() == GameMode.CREATIVE) {
-			return;
-		}
-		
-		if (!isHoldingAxe(state.player) || state.heldItem.getAmount() == 0) {
+		if (
+      state.player.getGameMode() == GameMode.CREATIVE || // Ignore if gamemode is creative
+      !isHoldingAxe(state.player) ||                     // Ignore if player is not holding axe
+      state.heldItem.getAmount() == 0                    // Ignore if held items amount is 0
+      ) {
 			return;
 		}
 
@@ -158,11 +148,13 @@ public class WoodCutter extends JavaPlugin implements Listener {
 
 	private boolean isHoldingAxe(Player p) {
 		Material held = p.getInventory().getItemInMainHand().getType();
+
 		return held.toString().endsWith("_AXE");
 	}
 	
 	private short maxDurability(Material m) {
 		short durability;
+
 		switch (m) {
 			case GOLD_AXE:
 				durability = 33;
@@ -183,6 +175,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
 				durability = 0;
 				break;
 		}
+
 		return durability;
 	}
 }

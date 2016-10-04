@@ -7,14 +7,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 public class WoodCutterState {
-    final int id;
-    final byte meta;
-    final Location origin;
-    final Player player;
-    final ItemStack heldItem;
-    final int heldItemUnbreaking;
+    private final int id;
+    private final byte meta;
+    private final Location origin;
+    private final Player player;
+    private final ItemStack heldItem;
+    private final int heldItemUnbreaking;
 
-    int totalFallen = 0;
+    private int totalFallen = 0;
 
     @SuppressWarnings("deprecation")
     public WoodCutterState(Block block, Player player) {

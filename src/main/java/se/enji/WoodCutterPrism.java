@@ -10,7 +10,7 @@ import org.bukkit.plugin.Plugin;
 // Wrapper class is needed, to prevent ClassDefNotFound in WoodCutter.java if PRISM is
 // not installed
 public class WoodCutterPrism {
-    Prism prism;
+    private Prism prism;
 
     public WoodCutterPrism(Plugin plugin) {
         prism = (Prism) plugin;

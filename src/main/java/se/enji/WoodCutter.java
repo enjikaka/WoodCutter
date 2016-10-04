@@ -18,23 +18,23 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class WoodCutter extends JavaPlugin implements Listener {
-	FileConfiguration config;
-	WoodCutterPrism prism;
-	Random random;
+	private FileConfiguration config;
+	private WoodCutterPrism prism;
+	private Random random;
 
-	boolean needAxe;
-	boolean mustSneak;
-	boolean recordPrismEvents;
+	private boolean needAxe;
+	private boolean mustSneak;
+	private boolean recordPrismEvents;
 
-	List<?> breakable = Arrays.asList(Material.LOG, Material.LOG_2);
+	private List<?> breakable = Arrays.asList(Material.LOG, Material.LOG_2);
 	private List<?> surroundable = Arrays.asList(Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS);
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);
-		
+
 		config = getConfig();
 		config.options().copyDefaults(true);
-		
+
 		needAxe = config.getBoolean("needAxe");
 		mustSneak = config.getBoolean("mustSneak");
 		recordPrismEvents = config.getBoolean("recordPrismEvents");
@@ -56,7 +56,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		Player p = e.getPlayer();
     Location l = e.getBlock().getLocation();
     WoodCutterState state = new WoodCutterState(e.getBlock(), p);
-		
+
 		if (
       !p.hasPermission("woodcutter.use") || // If user does not have permission to use WoodCutter
       !breakable.contains(e.getBlock().getType()) || // If the broken block is not a log
@@ -67,7 +67,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
       ) {
 			return;
 		}
-		
+
 		columnRemove(state, l);
 	}
 
@@ -76,10 +76,10 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		int fallen = 0;
 
 		location.subtract(0.0, 1.0, 0.0);
-		
+
 		while (logsLeft) {
 			Block block = location.add(0.0,1.0,0.0).getBlock();
-			
+
 			if (state.isSameTree(block)) {
 				if (prism != null) {
 					prism.recordBreak(block, state.player);
@@ -90,7 +90,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
 				fallen++;
 				state.totalFallen++;
 			}
-			
+
 			else logsLeft = false;
 
 			for (int x = -1; x <= 1; x++)
@@ -151,7 +151,7 @@ public class WoodCutter extends JavaPlugin implements Listener {
 
 		return held.toString().endsWith("_AXE");
 	}
-	
+
 	private short maxDurability(Material m) {
 		short durability;
 

@@ -17,7 +17,7 @@ public class WoodCutterPrism {
     }
 
     // https://github.com/prism/PrismApiDemo/blob/master/src/main/java/me/botsko/prismapidemo/manual/CustomManualActionExample.java
-    void recordBreak(Block block, Player player) {
+    public void recordBreak(Block block, Player player) {
         BlockAction action = new BlockAction();
 
         action.setActionType("block-break");

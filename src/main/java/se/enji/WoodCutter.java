@@ -117,19 +117,21 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		}
 	}
 
-	private void durabilityCheck(WoodCutterState state, int fallen) {
-		if (
-      state.player.getGameMode() == GameMode.CREATIVE || // Ignore if gamemode is creative
-      !isHoldingAxe(state.player) ||                     // Ignore if player is not holding axe
-      state.heldItem.getAmount() == 0                    // Ignore if held items amount is 0
-      ) {
+	private void durabilityCheck(WoodCutterState state, int fallenBefore) {
+		private boolean gameModeIsCreative = state.player.getGameMode() == GameMode.CREATIVE;
+		private boolean playerIsHoldingAxe = isHoldingAxe(state.player);
+		private boolean heldItemsAreZero = state.heldItem.getAmount() == 0;
+
+		private int fallen = fallenBefore;
+
+		if (gameModeIsCreative || !playerIsHoldingAxe || heldItemsAreZero) {
 			return;
 		}
 
 		if (state.heldItemUnbreaking > 0) {
 			// http://minecraft.gamepedia.com/Enchantment#Enchantments
 			int chance = 100 / (state.heldItemUnbreaking + 1);
-			int oldFallen = fallen;
+			int oldFallen = fallenBefore;
 
 			for (int i = 0; i < oldFallen; i++) {
 				if (random.nextInt(100) > chance) fallen--;

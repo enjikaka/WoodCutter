@@ -1,6 +1,8 @@
 WoodCutter
 ==========
 
+[![Codacy grade](https://img.shields.io/codacy/grade/3777e2a702284e1091eb87c0781458a6.svg "Codacy grade")](https://www.codacy.com/app/karlsson/eslint-config-tidal)
+
 Tree felling plugin for the Minecraft server software Bukkit.
 
 WoodCutter on BukkitDev: http://dev.bukkit.org/bukkit-plugins/woodcutter/

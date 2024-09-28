@@ -14,20 +14,25 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.plugin.Plugin;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class WoodCutter extends JavaPlugin implements Listener {
 	private FileConfiguration config;
-	private WoodCutterPrism prism;
 	private Random random;
 
 	private boolean needAxe;
 	private boolean mustSneak;
-	private boolean recordPrismEvents;
 
-	private List<?> breakable = Arrays.asList(Material.LOG, Material.LOG_2);
-	private List<?> surroundable = Arrays.asList(Material.LOG, Material.LOG_2, Material.DIRT, Material.GRASS);
+	private boolean isLog(Block block) {
+		return block.getType().name().endsWith("LOG");
+	}
+
+	private boolean acceptableSurroundable(Block block) {
+		List<Material> surroundable = Arrays.asList(Material.DIRT, Material.GRASS_BLOCK);
+
+		return isLog(block) || surroundable.contains(block.getType());
+	}
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);
@@ -37,38 +42,45 @@ public class WoodCutter extends JavaPlugin implements Listener {
 
 		needAxe = config.getBoolean("needAxe");
 		mustSneak = config.getBoolean("mustSneak");
-		recordPrismEvents = config.getBoolean("recordPrismEvents");
-
-		Plugin prismPlugin = getServer().getPluginManager().getPlugin("Prism");
-		if (recordPrismEvents && prismPlugin != null) {
-			prism = new WoodCutterPrism(prismPlugin);
-		} else {
-			prism = null;
-		}
 
 		random = new Random();
 
 		saveConfig();
 	}
 
-	@EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-	public void onBlockBreak(BlockBreakEvent e) {
-		Player p = e.getPlayer();
-    Location l = e.getBlock().getLocation();
-    WoodCutterState state = new WoodCutterState(e.getBlock(), p);
-
-		if (
-      !p.hasPermission("woodcutter.use") || // If user does not have permission to use WoodCutter
-      !breakable.contains(e.getBlock().getType()) || // If the broken block is not a log
-      needAxe && !isHoldingAxe(p) || // If axe must be held in hand for woodcutting to be allowed and if use is not holding one
-      !surroundable.contains(l.subtract(0.0, 1.0, 0.0).getBlock().getType()) || // If block below is not a accepted "surroundable" block.
-      !surroundable.contains(l.add(0.0, 1.0, 0.0).getBlock().getType()) || // If block above is not an accepted "surroundable" block.
-      mustSneak && !p.isSneaking() // If sneaking must be made to fell trees and user is not sneaking
-      ) {
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onBlockBreak(BlockBreakEvent event) {
+		if (event.isCancelled())
 			return;
-		}
 
-		columnRemove(state, l);
+		Player player = event.getPlayer();
+		Block eventBlock = event.getBlock();
+
+		if (!player.hasPermission("woodcutter.use"))
+			return;
+
+		if (mustSneak && !player.isSneaking())
+			return;
+
+		if (needAxe && !isHoldingAxe(player))
+			return;
+
+		if (!isLog(eventBlock))
+			return;
+
+		Location location = event.getBlock().getLocation();
+		Block blockBeneath = location.subtract(0.0, 1.0, 0.0).getBlock();
+
+		if (!acceptableSurroundable(blockBeneath))
+			return;
+
+		Block blockAbove = location.add(0.0, 1.0, 0.0).getBlock();
+
+		if (!isLog(blockAbove))
+			return;
+
+		WoodCutterState state = new WoodCutterState(eventBlock, player);
+		columnRemove(state, location);
 	}
 
 	private void columnRemove(WoodCutterState state, Location location) {
@@ -78,25 +90,21 @@ public class WoodCutter extends JavaPlugin implements Listener {
 		location.subtract(0.0, 1.0, 0.0);
 
 		while (logsLeft) {
-			Block block = location.add(0.0,1.0,0.0).getBlock();
+			Block block = location.add(0.0, 1.0, 0.0).getBlock();
 
 			if (state.isSameTree(block)) {
-				if (prism != null) {
-					prism.recordBreak(block, state.player);
-				}
-
 				block.breakNaturally(state.heldItem);
-
 				fallen++;
 				state.totalFallen++;
 			}
 
-			else logsLeft = false;
+			else
+				logsLeft = false;
 
 			for (int x = -1; x <= 1; x++)
-			for (int z = -1; z <= 1; z++) {
-				columnCheck(state, block, x, z);
-			}
+				for (int z = -1; z <= 1; z++) {
+					columnCheck(state, block, x, z);
+				}
 		}
 
 		durabilityCheck(state, fallen);
@@ -118,11 +126,11 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	}
 
 	private void durabilityCheck(WoodCutterState state, int fallenBefore) {
-		private boolean gameModeIsCreative = state.player.getGameMode() == GameMode.CREATIVE;
-		private boolean playerIsHoldingAxe = isHoldingAxe(state.player);
-		private boolean heldItemsAreZero = state.heldItem.getAmount() == 0;
+		boolean gameModeIsCreative = state.player.getGameMode() == GameMode.CREATIVE;
+		boolean playerIsHoldingAxe = isHoldingAxe(state.player);
+		boolean heldItemsAreZero = state.heldItem.getAmount() == 0;
 
-		private int fallen = fallenBefore;
+		int fallen = fallenBefore;
 
 		if (gameModeIsCreative || !playerIsHoldingAxe || heldItemsAreZero) {
 			return;
@@ -134,14 +142,18 @@ public class WoodCutter extends JavaPlugin implements Listener {
 			int oldFallen = fallenBefore;
 
 			for (int i = 0; i < oldFallen; i++) {
-				if (random.nextInt(100) > chance) fallen--;
+				if (random.nextInt(100) > chance)
+					fallen--;
 			}
 		}
 
-		short newDurability = (short)(state.heldItem.getDurability() + fallen);
+		Damageable axeItemMeta = (Damageable) (state.heldItem.getItemMeta());
 
-		if (newDurability < maxDurability(state.heldItem.getType())) {
-			state.heldItem.setDurability(newDurability);
+		short newDamage = (short) (axeItemMeta.getDamage() + fallen);
+		int maxDamage = axeItemMeta.getMaxDamage();
+
+		if (newDamage < maxDamage) {
+			axeItemMeta.setDamage(newDamage);
 		} else {
 			state.heldItem.setAmount(0);
 			state.player.getInventory().setItemInMainHand(null);
@@ -151,33 +163,6 @@ public class WoodCutter extends JavaPlugin implements Listener {
 	private boolean isHoldingAxe(Player p) {
 		Material held = p.getInventory().getItemInMainHand().getType();
 
-		return held.toString().endsWith("_AXE");
-	}
-
-	private short maxDurability(Material m) {
-		short durability;
-
-		switch (m) {
-			case GOLD_AXE:
-				durability = 33;
-				break;
-			case WOOD_AXE:
-				durability = 60;
-				break;
-			case STONE_AXE:
-				durability = 132;
-				break;
-			case IRON_AXE:
-				durability = 251;
-				break;
-			case DIAMOND_AXE:
-				durability = 1562;
-				break;
-			default:
-				durability = 0;
-				break;
-		}
-
-		return durability;
+		return held.toString().endsWith("AXE");
 	}
 }

@@ -2,42 +2,43 @@ package se.enji;
 
 import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 public class WoodCutterState {
-    private final int id;
-    private final byte meta;
-    private final Location origin;
-    private final Player player;
-    private final ItemStack heldItem;
-    private final int heldItemUnbreaking;
+    public final Material material;
+    public final BlockFace face;
+    public final Location origin;
+    public final Player player;
+    public final ItemStack heldItem;
+    public final int heldItemUnbreaking;
 
-    private int totalFallen = 0;
+    public int totalFallen = 0;
 
-    @SuppressWarnings("deprecation")
     public WoodCutterState(Block block, Player player) {
-        this.id = block.getTypeId();
-        this.meta = block.getData();
+        this.material = block.getType();
+        this.face = block.getFace(block);
         this.origin = block.getLocation();
         this.player = player;
         this.heldItem = player.getInventory().getItemInMainHand();
-        this.heldItemUnbreaking = heldItem.getEnchantmentLevel(Enchantment.DURABILITY);
+        this.heldItemUnbreaking = heldItem.getEnchantmentLevel(Enchantment.UNBREAKING);
     }
 
-    @SuppressWarnings("deprecation")
     public boolean isSameTree(Block block) {
         // Using deprecated ID and meta here, because the only alternative seems to be
         // creating new Tree objects. Seems too wasteful
-        int blockId = block.getTypeId();
-        int blockMeta = block.getData();
-        
+        Material blockMaterial = block.getType();
+        BlockFace blockFace = block.getFace(block);
+
         // Handle special case for large oak trees, which uses horizontal logs
-        if (id == 17 && meta == 0) {
-            return blockId == 17 && (blockMeta == 0 || blockMeta == 4 || blockMeta == 8);
+        if (this.material.equals(Material.OAK_LOG) && this.face.equals(BlockFace.UP) || this.face.equals(BlockFace.DOWN)) {
+            return blockMaterial.equals(Material.OAK_LOG) && (blockFace.equals(BlockFace.UP) || blockFace.equals(BlockFace.DOWN) || blockFace.equals(BlockFace.NORTH) || blockFace.equals(BlockFace.SOUTH) || blockFace.equals(BlockFace.WEST) || blockFace.equals(BlockFace.EAST));
         }
 
-        else return blockId == id && blockMeta == meta;
+        else
+            return blockMaterial.equals(this.material) && blockFace.equals(this.face);
     }
 }
